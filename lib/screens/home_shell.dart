@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'projects_screen.dart';
 import 'settings_screen.dart';
+import '../services/server_store.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({super.key, required this.store});
+
+  final ServerStore store;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -19,7 +22,7 @@ class _HomeShellState extends State<HomeShell> {
     final screens = [
       const HomeScreen(),
       const ProjectsScreen(),
-      const SettingsScreen(),
+      SettingsScreen(store: widget.store),
     ];
 
     return Scaffold(

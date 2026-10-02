@@ -1,3 +1,3 @@
 import 'app.dart';
 
-void main() => runApp(const SidApp());
+void main() => runApp(SidApp());
