@@ -168,8 +168,12 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
     if (session == null || _requestInFlight) return;
     setState(() { _requestInFlight = true; _error = null; });
     try {
-      _setSession(await widget.api.reviseAssistant(session.id, _feedbackController.text));
+      final revised = await widget.api.reviseAssistant(session.id, _feedbackController.text);
+      if (!mounted) return;
+      _briefSessionId = null;
       _showFeedback = false;
+      _feedbackController.clear();
+      _setSession(revised);
     } on SidApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
