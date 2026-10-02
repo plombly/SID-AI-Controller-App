@@ -20,7 +20,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      const HomeScreen(),
+      HomeScreen(store: widget.store),
       const ProjectsScreen(),
       SettingsScreen(store: widget.store),
     ];
@@ -33,10 +33,7 @@ class _HomeShellState extends State<HomeShell> {
           setState(() => selectedIndex = index);
         },
         destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
           NavigationDestination(
             icon: Icon(Icons.folder_outlined),
             label: 'Projects',

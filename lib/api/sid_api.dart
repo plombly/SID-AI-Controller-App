@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
@@ -8,6 +9,16 @@ import '../models/sid_server.dart';
 import 'models.dart';
 
 const int supportedApiVersion = 1;
+
+String newRequestId() {
+  const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  final random = Random.secure();
+  return List<String>.generate(
+    24,
+    (_) => characters[random.nextInt(characters.length)],
+  ).join();
+}
 
 class SidApiException implements Exception {
   const SidApiException(this.message, [this.statusCode]);
@@ -37,6 +48,67 @@ class SidApi {
   Future<Summary> summary() async {
     final json = await _getJson('/api/app/summary');
     return Summary.fromJson(json);
+  }
+
+  Future<void> jobAction(
+    String jobId,
+    String action, {
+    String expectedStatus = 'needs_human',
+  }) async {
+    try {
+      final baseUrl = _server.url.replaceFirst(RegExp(r'/+$'), '');
+      final response = await _client
+          .post(
+            Uri.parse('$baseUrl/api/jobs/$jobId/actions'),
+            headers: {
+              'Authorization': 'Bearer ${_server.key}',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'action': action,
+              'request_id': newRequestId(),
+              'expected_status': expectedStatus,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 401) {
+        throw SidApiException(
+          "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
+          response.statusCode,
+        );
+      }
+      if (response.statusCode == 403 || response.statusCode == 409) {
+        String? detail;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map && decoded['detail'] is String) {
+            detail = decoded['detail'] as String;
+          }
+        } on FormatException {
+          // Fall through to the safe HTTP fallback.
+        }
+        throw SidApiException(
+          detail ?? 'SID answered with HTTP ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+      if (response.statusCode != 202) {
+        throw SidApiException(
+          'SID answered with HTTP ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+    } on SidApiException {
+      rethrow;
+    } on TimeoutException {
+      throw _connectionException();
+    } on SocketException {
+      throw _connectionException();
+    } on http.ClientException {
+      throw _connectionException();
+    }
   }
 
   Future<AppInfo> checkCompatible() async {
