@@ -9,7 +9,7 @@ import 'vpn_profile.dart';
 enum VpnStatus { disconnected, connecting, connected, failed }
 
 VpnStatus statusForStage(VPNStage stage) => switch (stage) {
-  VPNStage.exiting => VpnStatus.disconnected,
+  VPNStage.exiting || VPNStage.disconnected => VpnStatus.disconnected,
   VPNStage.connected => VpnStatus.connected,
   VPNStage.denied || VPNStage.error => VpnStatus.failed,
   _ => VpnStatus.connecting,

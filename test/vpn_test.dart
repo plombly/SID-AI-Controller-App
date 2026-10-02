@@ -24,6 +24,7 @@ void main() {
 
   test('maps VPN stages to statuses', () {
     expect(statusForStage(VPNStage.exiting), VpnStatus.disconnected);
+    expect(statusForStage(VPNStage.disconnected), VpnStatus.disconnected);
     expect(statusForStage(VPNStage.connected), VpnStatus.connected);
     expect(statusForStage(VPNStage.denied), VpnStatus.failed);
     expect(statusForStage(VPNStage.error), VpnStatus.failed);
