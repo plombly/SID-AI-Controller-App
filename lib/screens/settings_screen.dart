@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/sid_server.dart';
 import '../services/pairing.dart';
 import '../services/server_store.dart';
+import 'scan_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.store});
@@ -36,48 +37,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _addServer() async {
-    final controller = TextEditingController();
-    String? errorText;
     await showDialog<void>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add server'),
-          content: TextField(
-            controller: controller,
-            minLines: 3,
-            maxLines: 5,
-            decoration: InputDecoration(
-              labelText: 'Pairing code',
-              errorText: errorText,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                try {
-                  final server = parsePairingCode(
-                    controller.text,
-                    id: newServerId(),
-                  );
-                  await widget.store.save(server);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                  await _refresh();
-                } on FormatException catch (error) {
-                  setDialogState(() => errorText = error.message);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => AddServerDialog(store: widget.store, onSaved: _refresh),
     );
   }
 
@@ -158,6 +120,93 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class AddServerDialog extends StatefulWidget {
+  const AddServerDialog({
+    super.key,
+    required this.store,
+    required this.onSaved,
+  });
+
+  final ServerStore store;
+  final Future<void> Function() onSaved;
+
+  @override
+  AddServerDialogState createState() => AddServerDialogState();
+}
+
+class AddServerDialogState extends State<AddServerDialog> {
+  final _controller = TextEditingController();
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> useScannedCode(String code) async {
+    _controller.text = code;
+    await _addCode();
+  }
+
+  Future<void> _addCode() async {
+    try {
+      final server = parsePairingCode(_controller.text, id: newServerId());
+      await widget.store.save(server);
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      await widget.onSaved();
+    } on FormatException catch (error) {
+      if (mounted) {
+        setState(() => _errorText = error.message);
+      }
+    }
+  }
+
+  Future<void> _scan() async {
+    final code = await Navigator.of(context)
+        .push<String>(MaterialPageRoute(builder: (_) => const ScanScreen()));
+    if (mounted && code != null) {
+      await useScannedCode(code);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add server'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextButton.icon(
+            onPressed: _scan,
+            icon: const Icon(Icons.qr_code_scanner),
+            label: const Text('Scan QR code'),
+          ),
+          TextField(
+            controller: _controller,
+            minLines: 3,
+            maxLines: 5,
+            decoration: InputDecoration(
+              labelText: 'Pairing code',
+              errorText: _errorText,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _addCode, child: const Text('Add')),
+      ],
     );
   }
 }
