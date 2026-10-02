@@ -135,6 +135,153 @@ class GoalItem {
   }
 }
 
+class ProjectRef {
+  const ProjectRef({
+    required this.id,
+    required this.name,
+    required this.status,
+  });
+
+  final String id;
+  final String name;
+  final String status;
+
+  factory ProjectRef.fromJson(Map<String, dynamic> json) => ProjectRef(
+    id: _stringValue(json['id']),
+    name: _stringValue(json['name']),
+    status: _stringValue(json['status']),
+  );
+}
+
+class JobRef {
+  const JobRef({required this.id, required this.title, required this.status});
+
+  final String id;
+  final String title;
+  final String status;
+
+  factory JobRef.fromJson(Map<String, dynamic> json) => JobRef(
+    id: _stringValue(json['id']),
+    title: _stringValue(json['title']),
+    status: _stringValue(json['status']),
+  );
+}
+
+class ProjectDetail {
+  const ProjectDetail({
+    required this.id,
+    required this.name,
+    required this.status,
+    required this.importance,
+    required this.parent,
+    required this.parentName,
+    required this.type,
+    required this.children,
+    required this.goals,
+    required this.jobs,
+  });
+
+  final String id;
+  final String name;
+  final String status;
+  final String importance;
+  final String parent;
+  final String parentName;
+  final String type;
+  final List<ProjectRef> children;
+  final List<GoalItem> goals;
+  final List<JobRef> jobs;
+
+  factory ProjectDetail.fromJson(Map<String, dynamic> json) {
+    final projectType = _mapValue(json['project_type']);
+    return ProjectDetail(
+      id: _stringValue(json['id']),
+      name: _stringValue(json['name']),
+      status: _stringValue(json['status']),
+      importance: _stringValue(json['importance']),
+      parent: _stringValue(json['parent']),
+      parentName: _stringValue(json['parent_name']),
+      type: _stringValue(projectType['type']),
+      children: _mapList(json['children']).map(ProjectRef.fromJson).toList(),
+      goals: _mapList(json['goals']).map(GoalItem.fromJson).toList(),
+      jobs: _mapList(json['jobs']).map(JobRef.fromJson).toList(),
+    );
+  }
+}
+
+class AssistantQuestion {
+  const AssistantQuestion({required this.question, required this.options});
+
+  final String question;
+  final List<String> options;
+
+  factory AssistantQuestion.fromJson(Map<String, dynamic> json) =>
+      AssistantQuestion(
+        question: _stringValue(json['question']),
+        options: json['options'] is List
+            ? (json['options'] as List).whereType<String>().toList()
+            : <String>[],
+      );
+}
+
+class AssistantBrief {
+  const AssistantBrief({
+    required this.title,
+    required this.summary,
+    required this.goal,
+    required this.atomic,
+  });
+
+  final String title;
+  final String summary;
+  final String goal;
+  final bool atomic;
+
+  factory AssistantBrief.fromJson(Map<String, dynamic> json) => AssistantBrief(
+    title: _stringValue(json['title']),
+    summary: _stringValue(json['summary']),
+    goal: _stringValue(json['goal']),
+    atomic: json['atomic'] is bool ? json['atomic'] as bool : false,
+  );
+}
+
+class AssistantSession {
+  const AssistantSession({
+    required this.id,
+    required this.projectId,
+    required this.status,
+    required this.questions,
+    required this.brief,
+    required this.error,
+    required this.goalId,
+  });
+
+  final String id;
+  final String projectId;
+  final String status;
+  final List<AssistantQuestion> questions;
+  final AssistantBrief? brief;
+  final String error;
+  final String goalId;
+
+  bool get working => status == 'queued' || status == 'thinking';
+
+  factory AssistantSession.fromJson(Map<String, dynamic> json) =>
+      AssistantSession(
+        id: _stringValue(json['id']),
+        projectId: _stringValue(json['project_id']),
+        status: _stringValue(json['status']),
+        questions: _mapList(json['questions'])
+            .map(AssistantQuestion.fromJson)
+            .toList(),
+        brief: json['brief'] == null
+            ? null
+            : AssistantBrief.fromJson(_mapValue(json['brief'])),
+        error: _stringValue(json['error']),
+        goalId: _stringValue(json['goal_id']),
+      );
+}
+
 class ProjectItem {
   const ProjectItem({
     required this.id,

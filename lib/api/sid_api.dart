@@ -50,6 +50,74 @@ class SidApi {
     return Summary.fromJson(json);
   }
 
+  Future<ProjectDetail> project(String id) async => ProjectDetail.fromJson(
+    await _getJsonPath(<String>['api', 'projects', id], {'limit': '25'}),
+  );
+
+  Future<String> submitGoal(
+    String projectId,
+    String goal, {
+    bool atomic = false,
+  }) async {
+    final json = await _postJson(
+      <String>['api', 'projects', projectId, 'goals'],
+      {'goal': goal, 'atomic': atomic, 'request_id': newRequestId()},
+    );
+    return json['id'] is String ? json['id'] as String : '';
+  }
+
+  Future<AssistantSession> startAssistant(
+    String projectId,
+    String idea,
+  ) async => AssistantSession.fromJson(
+    await _postJson(
+      <String>['api', 'projects', projectId, 'assistant'],
+      {'idea': idea},
+    ),
+  );
+
+  Future<AssistantSession> assistant(String sessionId) async =>
+      AssistantSession.fromJson(
+        await _getJsonPath(<String>['api', 'assistant', sessionId]),
+      );
+
+  Future<AssistantSession> answerAssistant(
+    String sessionId,
+    List<String> answers,
+  ) async => AssistantSession.fromJson(
+    await _postJson(
+      <String>['api', 'assistant', sessionId, 'reply'],
+      {'answers': answers},
+    ),
+  );
+
+  Future<AssistantSession> reviseAssistant(
+    String sessionId,
+    String feedback,
+  ) async => AssistantSession.fromJson(
+    await _postJson(
+      <String>['api', 'assistant', sessionId, 'reply'],
+      {'feedback': feedback},
+    ),
+  );
+
+  Future<String> submitAssistant(
+    String sessionId,
+    String goal, {
+    required bool atomic,
+  }) async {
+    final json = await _postJson(
+      <String>['api', 'assistant', sessionId, 'submit'],
+      {'goal': goal, 'atomic': atomic, 'request_id': newRequestId()},
+    );
+    return json['id'] is String ? json['id'] as String : '';
+  }
+
+  Future<AssistantSession> cancelAssistant(String sessionId) async =>
+      AssistantSession.fromJson(
+        await _postJson(<String>['api', 'assistant', sessionId, 'cancel'], {}),
+      );
+
   Future<void> jobAction(
     String jobId,
     String action, {
@@ -140,6 +208,9 @@ class SidApi {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 401 || response.statusCode == 403) {
+        if (response.statusCode == 403) {
+          throw _responseException(response);
+        }
         throw SidApiException(
           "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
           response.statusCode,
@@ -168,6 +239,105 @@ class SidApi {
     } on FormatException {
       throw const SidApiException('SID sent an unexpected answer');
     }
+  }
+
+  Future<Map<String, dynamic>> _getJsonPath(
+    List<String> segments, [
+    Map<String, String>? queryParameters,
+  ]) async {
+    return _requestJson(_uri(segments, queryParameters), method: 'GET');
+  }
+
+  Future<Map<String, dynamic>> _postJson(
+    List<String> segments,
+    Map<String, dynamic> body,
+  ) async => _requestJson(_uri(segments), method: 'POST', body: body);
+
+  Uri _uri(List<String> segments, [Map<String, String>? queryParameters]) {
+    final base = Uri.parse(_server.url.replaceFirst(RegExp(r'/+$'), ''));
+    return base.replace(
+      pathSegments: <String>[...base.pathSegments, ...segments],
+      queryParameters: queryParameters,
+    );
+  }
+
+  Future<Map<String, dynamic>> _requestJson(
+    Uri uri, {
+    required String method,
+    Map<String, dynamic>? body,
+  }) async {
+    try {
+      final response =
+          await (method == 'GET'
+                  ? _client.get(
+                      uri,
+                      headers: {
+                        'Authorization': 'Bearer ${_server.key}',
+                        'Accept': 'application/json',
+                      },
+                    )
+                  : _client.post(
+                      uri,
+                      headers: {
+                        'Authorization': 'Bearer ${_server.key}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                      },
+                      body: jsonEncode(body ?? <String, dynamic>{}),
+                    ))
+              .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 401) {
+        throw SidApiException(
+          "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
+          response.statusCode,
+        );
+      }
+      if (response.statusCode == 403 ||
+          response.statusCode == 409 ||
+          response.statusCode == 422 ||
+          response.statusCode == 429) {
+        throw _responseException(response);
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw SidApiException(
+          'SID answered with HTTP ${response.statusCode}',
+          response.statusCode,
+        );
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map) {
+        throw const SidApiException('SID sent an unexpected answer');
+      }
+      return Map<String, dynamic>.from(decoded);
+    } on SidApiException {
+      rethrow;
+    } on TimeoutException {
+      throw _connectionException();
+    } on SocketException {
+      throw _connectionException();
+    } on http.ClientException {
+      throw _connectionException();
+    } on FormatException {
+      throw const SidApiException('SID sent an unexpected answer');
+    }
+  }
+
+  SidApiException _responseException(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded['detail'] is String) {
+        return SidApiException(
+          decoded['detail'] as String,
+          response.statusCode,
+        );
+      }
+    } on FormatException {
+      // Fall through to the safe HTTP fallback.
+    }
+    return SidApiException(
+      'SID answered with HTTP ${response.statusCode}',
+      response.statusCode,
+    );
   }
 
   SidApiException _connectionException() => SidApiException(
