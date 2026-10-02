@@ -5,12 +5,8 @@ import 'package:sid_app/models/sid_server.dart';
 import 'package:sid_app/services/server_store.dart';
 
 void main() {
-  SidServer server(String id, String name) => SidServer(
-        id: id,
-        name: name,
-        url: 'http://$id',
-        key: 'sidk_$id',
-      );
+  SidServer server(String id, String name) =>
+      SidServer(id: id, name: name, url: 'http://$id', key: 'sidk_$id');
 
   test('saves, replaces, and tracks the active server', () async {
     final memory = MemoryKeyValueStore();
@@ -21,16 +17,18 @@ void main() {
     expect((await store.servers()).single.name, 'Updated');
   });
 
-  test('removing active servers selects the first and then clears active',
-      () async {
-    final store = ServerStore(MemoryKeyValueStore());
-    await store.save(server('one', 'One'));
-    await store.save(server('two', 'Two'));
-    await store.remove('one');
-    expect(await store.activeId(), 'two');
-    await store.remove('two');
-    expect(await store.activeId(), isNull);
-  });
+  test(
+    'removing active servers selects the first and then clears active',
+    () async {
+      final store = ServerStore(MemoryKeyValueStore());
+      await store.save(server('one', 'One'));
+      await store.save(server('two', 'Two'));
+      await store.remove('one');
+      expect(await store.activeId(), 'two');
+      await store.remove('two');
+      expect(await store.activeId(), isNull);
+    },
+  );
 
   test('round-trips server data through sid.servers', () async {
     final memory = MemoryKeyValueStore();
@@ -38,5 +36,15 @@ void main() {
     await store.save(server('one', 'One'));
     final raw = await memory.read('sid.servers');
     expect(jsonDecode(raw!), [server('one', 'One').toJson()]);
+  });
+
+  test('removing a server clears its VPN profile', () async {
+    final memory = MemoryKeyValueStore(<String, String>{
+      'sid.vpn.one': '{"config":"client","username":"","password":""}',
+    });
+    final store = ServerStore(memory);
+    await store.save(server('one', 'One'));
+    await store.remove('one');
+    expect(await memory.read('sid.vpn.one'), isNull);
   });
 }

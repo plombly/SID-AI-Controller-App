@@ -36,6 +36,21 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    lint {
+        disable += "InvalidPackage"
+        checkReleaseBuilds = false
+    }
+
+    packaging {
+        jniLibs.useLegacyPackaging = true
+    }
+
+    bundle {
+        language.enableSplit = false
+        density.enableSplit = false
+        abi.enableSplit = false
+    }
 }
 
 kotlin {

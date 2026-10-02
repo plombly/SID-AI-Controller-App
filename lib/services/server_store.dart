@@ -94,6 +94,7 @@ class ServerStore {
       serversKey,
       jsonEncode(current.map((item) => item.toJson()).toList()),
     );
+    await store.delete('sid.vpn.$id');
     if (wasActive) {
       if (current.isEmpty) {
         await store.delete(activeKey);
