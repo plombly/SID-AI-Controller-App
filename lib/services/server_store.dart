@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -29,7 +30,7 @@ class SecureKeyValueStore implements KeyValueStore {
 
 class MemoryKeyValueStore implements KeyValueStore {
   MemoryKeyValueStore([Map<String, String>? values])
-      : _values = values ?? <String, String>{};
+    : _values = values ?? <String, String>{};
 
   final Map<String, String> _values;
 
@@ -52,6 +53,9 @@ class ServerStore {
   static const String activeKey = 'sid.active';
 
   final KeyValueStore store;
+  final StreamController<void> _changes = StreamController<void>.broadcast();
+
+  Stream<void> get changes => _changes.stream;
 
   Future<List<SidServer>> servers() async {
     final value = await store.read(serversKey);
@@ -79,6 +83,7 @@ class ServerStore {
     if (index == -1 && current.length == 1) {
       await setActive(server.id);
     }
+    _changes.add(null);
   }
 
   Future<void> remove(String id) async {
@@ -96,11 +101,15 @@ class ServerStore {
         await setActive(current.first.id);
       }
     }
+    _changes.add(null);
   }
 
   Future<String?> activeId() => store.read(activeKey);
 
-  Future<void> setActive(String id) => store.write(activeKey, id);
+  Future<void> setActive(String id) async {
+    await store.write(activeKey, id);
+    _changes.add(null);
+  }
 }
 
 String newServerId() {

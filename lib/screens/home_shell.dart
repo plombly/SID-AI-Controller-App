@@ -21,7 +21,7 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final screens = [
       HomeScreen(store: widget.store),
-      const ProjectsScreen(),
+      ProjectsScreen(store: widget.store),
       SettingsScreen(store: widget.store),
     ];
 
