@@ -10,9 +10,13 @@ import '../vpn/vpn_controller.dart';
 import '../vpn/vpn_store.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({super.key, required this.store, VpnStore? vpnStore, VpnController? vpn, this.apiFor})
-      : vpnStore = vpnStore ?? VpnStore(MemoryKeyValueStore()),
-        vpn = vpn ?? FakeVpnController();
+  const HomeScreen({
+    super.key,
+    required this.store,
+    required this.vpnStore,
+    required this.vpn,
+    this.apiFor,
+  });
 
   final ServerStore store;
   final VpnStore vpnStore;
@@ -314,9 +318,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text(_summary?.serverName ?? _server?.name ?? 'Home'),
       ),
       body: _loading
-          ? Center(child: _connectingVpn
-              ? const Column(mainAxisSize: MainAxisSize.min, children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Connecting VPN…')])
-              : const CircularProgressIndicator())
+          ? Center(
+              child: _connectingVpn
+                  ? const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text('Connecting VPN…'),
+                      ],
+                    )
+                  : const CircularProgressIndicator(),
+            )
           : _error != null
           ? Center(
               child: Column(

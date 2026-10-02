@@ -11,9 +11,13 @@ import '../vpn/vpn_controller.dart';
 import '../vpn/vpn_store.dart';
 
 class ProjectsScreen extends StatefulWidget {
-  ProjectsScreen({super.key, required this.store, VpnStore? vpnStore, VpnController? vpn, this.apiFor})
-      : vpnStore = vpnStore ?? VpnStore(MemoryKeyValueStore()),
-        vpn = vpn ?? FakeVpnController();
+  const ProjectsScreen({
+    super.key,
+    required this.store,
+    required this.vpnStore,
+    required this.vpn,
+    this.apiFor,
+  });
 
   final ServerStore store;
   final VpnStore vpnStore;
@@ -129,9 +133,18 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Projects')),
       body: _loading && _summary == null
-          ? Center(child: _connectingVpn
-              ? const Column(mainAxisSize: MainAxisSize.min, children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Connecting VPN…')])
-              : const CircularProgressIndicator())
+          ? Center(
+              child: _connectingVpn
+                  ? const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text('Connecting VPN…'),
+                      ],
+                    )
+                  : const CircularProgressIndicator(),
+            )
           : _error != null
           ? _failure()
           : _summary == null

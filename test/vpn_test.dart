@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:openvpn_flutter/openvpn_flutter.dart' show VPNStage;
 import 'package:sid_app/services/server_store.dart';
 import 'package:sid_app/vpn/vpn_controller.dart';
 import 'package:sid_app/vpn/vpn_profile.dart';
@@ -19,6 +20,14 @@ void main() {
       validateOvpn('hello'),
       "This doesn't look like an OpenVPN client profile (.ovpn)",
     );
+  });
+
+  test('maps VPN stages to statuses', () {
+    expect(statusForStage(VPNStage.exiting), VpnStatus.disconnected);
+    expect(statusForStage(VPNStage.connected), VpnStatus.connected);
+    expect(statusForStage(VPNStage.denied), VpnStatus.failed);
+    expect(statusForStage(VPNStage.error), VpnStatus.failed);
+    expect(statusForStage(VPNStage.connecting), VpnStatus.connecting);
   });
 
   test('round-trips VpnProfile JSON', () {

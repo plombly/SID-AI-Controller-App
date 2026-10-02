@@ -8,6 +8,8 @@ import 'package:sid_app/api/sid_api.dart';
 import 'package:sid_app/models/sid_server.dart';
 import 'package:sid_app/screens/projects_screen.dart';
 import 'package:sid_app/services/server_store.dart';
+import 'package:sid_app/vpn/vpn_controller.dart';
+import 'package:sid_app/vpn/vpn_store.dart';
 
 const _server = SidServer(
   id: 'sid',
@@ -60,7 +62,12 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: ProjectsScreen(store: store, apiFor: (_) => api),
+        home: ProjectsScreen(
+          store: store,
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+          apiFor: (_) => api,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -84,7 +91,11 @@ void main() {
   testWidgets('shows no-server and server errors', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: ProjectsScreen(store: ServerStore(MemoryKeyValueStore())),
+        home: ProjectsScreen(
+          store: ServerStore(MemoryKeyValueStore()),
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -105,7 +116,12 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(
       MaterialApp(
-        home: ProjectsScreen(store: store, apiFor: (_) => api),
+        home: ProjectsScreen(
+          store: store,
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+          apiFor: (_) => api,
+        ),
       ),
     );
     await tester.pump();

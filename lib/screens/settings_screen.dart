@@ -9,9 +9,12 @@ import '../vpn/vpn_store.dart';
 import 'vpn_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  SettingsScreen({super.key, required this.store, VpnStore? vpnStore, VpnController? vpn})
-      : vpnStore = vpnStore ?? VpnStore(MemoryKeyValueStore()),
-        vpn = vpn ?? FakeVpnController();
+  const SettingsScreen({
+    super.key,
+    required this.store,
+    required this.vpnStore,
+    required this.vpn,
+  });
 
   final ServerStore store;
   final VpnStore vpnStore;
@@ -102,7 +105,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         .map(
                           (server) => ListTile(
                             title: Text(server.name),
-                            subtitle: Text('${server.url}${_hasVpn[server.id] == true ? ' · VPN' : ''}'),
+                            subtitle: Text(
+                              '${server.url}${_hasVpn[server.id] == true ? ' · VPN' : ''}',
+                            ),
                             leading: Icon(
                               server.id == _activeId
                                   ? Icons.check_circle
@@ -120,7 +125,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   icon: const Icon(Icons.vpn_key_outlined),
                                   tooltip: 'VPN',
                                   onPressed: () async {
-                                    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => VpnScreen(server: server, vpnStore: widget.vpnStore, vpn: widget.vpn)));
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => VpnScreen(
+                                          server: server,
+                                          vpnStore: widget.vpnStore,
+                                          vpn: widget.vpn,
+                                        ),
+                                      ),
+                                    );
                                     await _refresh();
                                   },
                                 ),

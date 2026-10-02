@@ -8,6 +8,13 @@ import 'vpn_profile.dart';
 
 enum VpnStatus { disconnected, connecting, connected, failed }
 
+VpnStatus statusForStage(VPNStage stage) => switch (stage) {
+  VPNStage.exiting => VpnStatus.disconnected,
+  VPNStage.connected => VpnStatus.connected,
+  VPNStage.denied || VPNStage.error => VpnStatus.failed,
+  _ => VpnStatus.connecting,
+};
+
 abstract class VpnController {
   VpnStatus get status;
   Stream<VpnStatus> get changes;
@@ -27,7 +34,7 @@ class OpenVpnController implements VpnController {
   VpnStatus _status = VpnStatus.disconnected;
   String? _lastError;
   Future<void>? _initializing;
-  bool _permissionRequested = false;
+  bool _permissionGranted = false;
 
   @override
   VpnStatus get status => _status;
@@ -43,13 +50,10 @@ class OpenVpnController implements VpnController {
   );
 
   void _onStageChanged(VPNStage stage, String rawStage) {
-    final next = switch (stage) {
-      VPNStage.connected => VpnStatus.connected,
-      VPNStage.disconnected => VpnStatus.disconnected,
-      VPNStage.denied || VPNStage.error || VPNStage.exiting => VpnStatus.failed,
-      _ => VpnStatus.connecting,
-    };
-    if (next == VpnStatus.failed) _lastError = rawStage;
+    final next = statusForStage(stage);
+    if (stage == VPNStage.denied || stage == VPNStage.error) {
+      _lastError = rawStage;
+    }
     if (next == VpnStatus.connected) _lastError = null;
     _status = next;
     _changes.add(next);
@@ -58,10 +62,11 @@ class OpenVpnController implements VpnController {
   @override
   Future<void> connect(VpnProfile profile, {required String name}) async {
     await _initialize();
-    if (Platform.isAndroid && !_permissionRequested) {
-      _permissionRequested = true;
-      if (!await _openvpn.requestPermissionAndroid()) {
-        _lastError = 'VPN permission denied';
+    if (Platform.isAndroid && !_permissionGranted) {
+      if (await _openvpn.requestPermissionAndroid()) {
+        _permissionGranted = true;
+      } else {
+        _lastError = 'VPN permission denied. Allow SID App to set up a VPN connection when Android asks.';
         _status = VpnStatus.failed;
         _changes.add(_status);
         return;

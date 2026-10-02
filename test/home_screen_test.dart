@@ -8,6 +8,8 @@ import 'package:sid_app/api/sid_api.dart';
 import 'package:sid_app/models/sid_server.dart';
 import 'package:sid_app/screens/home_screen.dart';
 import 'package:sid_app/services/server_store.dart';
+import 'package:sid_app/vpn/vpn_controller.dart';
+import 'package:sid_app/vpn/vpn_store.dart';
 
 const _summary =
     '''{"server_name":"SID Home","health":{"status":"ok"},"needs_you":{"ready":[{"id":"1","title":"Add a pause menu","project_id":"sid-app","status":"awaiting_review"}],"stuck":[{"id":"9f00aa11","title":"Stripe checkout","project_id":"shop","status":"needs_human","needs_human_kind":"network","network_request_step":"tests","network_request_reason":"network unavailable"}]},"in_progress":[{"id":"1","project_id":"sid-app","status":"running","summary":"SID App: servers","progress":{"total":3,"completed":1}}],"recent":[{"id":"2","project_id":"sid-app","status":"completed","summary":"Finished setup","progress":{"total":1,"completed":1}}]}''';
@@ -28,7 +30,13 @@ Future<ServerStore> _store() async {
 void main() {
   testWidgets('no server shows the setup message', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: HomeScreen(store: ServerStore(MemoryKeyValueStore()))),
+      MaterialApp(
+        home: HomeScreen(
+          store: ServerStore(MemoryKeyValueStore()),
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+        ),
+      ),
     );
     await tester.pump();
     expect(
@@ -48,7 +56,12 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(store: store, apiFor: (_) => api),
+        home: HomeScreen(
+          store: store,
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+          apiFor: (_) => api,
+        ),
       ),
     );
     await tester.pump();
@@ -79,7 +92,12 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(store: store, apiFor: (_) => api),
+        home: HomeScreen(
+          store: store,
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+          apiFor: (_) => api,
+        ),
       ),
     );
     await tester.pump();
@@ -113,7 +131,12 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(store: store, apiFor: (_) => api),
+        home: HomeScreen(
+          store: store,
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+          apiFor: (_) => api,
+        ),
       ),
     );
     await tester.pump();
@@ -135,7 +158,12 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(store: store, apiFor: (_) => api),
+        home: HomeScreen(
+          store: store,
+          vpn: FakeVpnController(),
+          vpnStore: VpnStore(MemoryKeyValueStore()),
+          apiFor: (_) => api,
+        ),
       ),
     );
     await tester.pump();
