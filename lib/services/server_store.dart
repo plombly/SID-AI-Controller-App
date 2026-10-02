@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../models/sid_server.dart';
+import '../models/laika_server.dart';
 
 abstract class KeyValueStore {
   Future<String?> read(String key);
@@ -49,26 +49,26 @@ class MemoryKeyValueStore implements KeyValueStore {
 class ServerStore {
   ServerStore(this.store);
 
-  static const String serversKey = 'sid.servers';
-  static const String activeKey = 'sid.active';
+  static const String serversKey = 'laika.servers';
+  static const String activeKey = 'laika.active';
 
   final KeyValueStore store;
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   Stream<void> get changes => _changes.stream;
 
-  Future<List<SidServer>> servers() async {
+  Future<List<LaikaServer>> servers() async {
     final value = await store.read(serversKey);
     if (value == null) {
-      return <SidServer>[];
+      return <LaikaServer>[];
     }
     final decoded = jsonDecode(value) as List<dynamic>;
     return decoded
-        .map((item) => SidServer.fromJson(item as Map<String, dynamic>))
+        .map((item) => LaikaServer.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 
-  Future<void> save(SidServer server) async {
+  Future<void> save(LaikaServer server) async {
     final current = await servers();
     final index = current.indexWhere((item) => item.id == server.id);
     if (index == -1) {
@@ -94,7 +94,7 @@ class ServerStore {
       serversKey,
       jsonEncode(current.map((item) => item.toJson()).toList()),
     );
-    await store.delete('sid.vpn.$id');
+    await store.delete('laika.vpn.$id');
     if (wasActive) {
       if (current.isEmpty) {
         await store.delete(activeKey);

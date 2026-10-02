@@ -7,8 +7,8 @@ import 'services/server_store.dart';
 import 'vpn/vpn_controller.dart';
 import 'vpn/vpn_store.dart';
 
-class SidApp extends StatelessWidget {
-  SidApp({super.key, ServerStore? store, VpnController? vpn, VpnStore? vpnStore})
+class LaikaApp extends StatelessWidget {
+  LaikaApp({super.key, ServerStore? store, VpnController? vpn, VpnStore? vpnStore})
       : store = store ?? ServerStore(const SecureKeyValueStore()),
         vpnStore = vpnStore ?? VpnStore(store?.store ?? const SecureKeyValueStore()),
         vpn = vpn ?? OpenVpnController();
@@ -20,7 +20,7 @@ class SidApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SID',
+      title: 'LAIka',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

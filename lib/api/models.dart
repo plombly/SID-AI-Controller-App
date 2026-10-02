@@ -41,14 +41,14 @@ class AppInfo {
     required this.serverName,
     required this.apiVersion,
     required this.minApiVersion,
-    required this.sidCommit,
+    required this.laikaCommit,
     required this.deviceName,
   });
 
   final String serverName;
   final int apiVersion;
   final int minApiVersion;
-  final String sidCommit;
+  final String laikaCommit;
   final String? deviceName;
 
   factory AppInfo.fromJson(Map<String, dynamic> json) {
@@ -57,7 +57,7 @@ class AppInfo {
       serverName: _stringValue(json['server_name']),
       apiVersion: _intValue(json['api_version']),
       minApiVersion: _intValue(json['min_api_version']),
-      sidCommit: _stringValue(json['sid_commit']),
+      laikaCommit: _stringValue(json['laika_commit']),
       deviceName: json['device'] == null
           ? null
           : _nullableString(device['name']),

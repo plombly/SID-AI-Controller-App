@@ -5,7 +5,7 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
-import '../models/sid_server.dart';
+import '../models/laika_server.dart';
 import 'models.dart';
 
 const int supportedApiVersion = 1;
@@ -20,8 +20,8 @@ String newRequestId() {
   ).join();
 }
 
-class SidApiException implements Exception {
-  const SidApiException(this.message, [this.statusCode]);
+class LaikaApiException implements Exception {
+  const LaikaApiException(this.message, [this.statusCode]);
 
   final String message;
   final int? statusCode;
@@ -30,13 +30,13 @@ class SidApiException implements Exception {
   String toString() => message;
 }
 
-class SidApi {
-  SidApi(SidServer server, {http.Client? client})
+class LaikaApi {
+  LaikaApi(LaikaServer server, {http.Client? client})
     : _server = server,
       _client = client ?? http.Client(),
       _ownsClient = client == null;
 
-  final SidServer _server;
+  final LaikaServer _server;
   final http.Client _client;
   final bool _ownsClient;
 
@@ -142,8 +142,8 @@ class SidApi {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 401) {
-        throw SidApiException(
-          "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
+        throw LaikaApiException(
+          "This phone's key was revoked or is not valid. Pair it again from LAIka → Settings → Phones & apps.",
           response.statusCode,
         );
       }
@@ -157,18 +157,18 @@ class SidApi {
         } on FormatException {
           // Fall through to the safe HTTP fallback.
         }
-        throw SidApiException(
-          detail ?? 'SID answered with HTTP ${response.statusCode}',
+        throw LaikaApiException(
+          detail ?? 'LAIka answered with HTTP ${response.statusCode}',
           response.statusCode,
         );
       }
       if (response.statusCode != 202) {
-        throw SidApiException(
-          'SID answered with HTTP ${response.statusCode}',
+        throw LaikaApiException(
+          'LAIka answered with HTTP ${response.statusCode}',
           response.statusCode,
         );
       }
-    } on SidApiException {
+    } on LaikaApiException {
       rethrow;
     } on TimeoutException {
       throw _connectionException();
@@ -182,13 +182,13 @@ class SidApi {
   Future<AppInfo> checkCompatible() async {
     final appInfo = await info();
     if (appInfo.minApiVersion > supportedApiVersion) {
-      throw SidApiException(
-        'This SID server needs a newer app (API version ${appInfo.minApiVersion})',
+      throw LaikaApiException(
+        'This LAIka server needs a newer app (API version ${appInfo.minApiVersion})',
       );
     }
     if (appInfo.deviceName == null) {
-      throw SidApiException(
-        "This phone is not paired with ${_server.name}. Pair it again from SID → Settings → Phones & apps.",
+      throw LaikaApiException(
+        "This phone is not paired with ${_server.name}. Pair it again from LAIka → Settings → Phones & apps.",
       );
     }
     return appInfo;
@@ -211,24 +211,24 @@ class SidApi {
         if (response.statusCode == 403) {
           throw _responseException(response);
         }
-        throw SidApiException(
-          "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
+        throw LaikaApiException(
+          "This phone's key was revoked or is not valid. Pair it again from LAIka → Settings → Phones & apps.",
           response.statusCode,
         );
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw SidApiException(
-          'SID answered with HTTP ${response.statusCode}',
+        throw LaikaApiException(
+          'LAIka answered with HTTP ${response.statusCode}',
           response.statusCode,
         );
       }
 
       final decoded = jsonDecode(response.body);
       if (decoded is! Map) {
-        throw const SidApiException('SID sent an unexpected answer');
+        throw const LaikaApiException('LAIka sent an unexpected answer');
       }
       return Map<String, dynamic>.from(decoded);
-    } on SidApiException {
+    } on LaikaApiException {
       rethrow;
     } on TimeoutException {
       throw _connectionException();
@@ -237,7 +237,7 @@ class SidApi {
     } on http.ClientException {
       throw _connectionException();
     } on FormatException {
-      throw const SidApiException('SID sent an unexpected answer');
+      throw const LaikaApiException('LAIka sent an unexpected answer');
     }
   }
 
@@ -287,8 +287,8 @@ class SidApi {
                     ))
               .timeout(const Duration(seconds: 15));
       if (response.statusCode == 401) {
-        throw SidApiException(
-          "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
+        throw LaikaApiException(
+          "This phone's key was revoked or is not valid. Pair it again from LAIka → Settings → Phones & apps.",
           response.statusCode,
         );
       }
@@ -299,17 +299,17 @@ class SidApi {
         throw _responseException(response);
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw SidApiException(
-          'SID answered with HTTP ${response.statusCode}',
+        throw LaikaApiException(
+          'LAIka answered with HTTP ${response.statusCode}',
           response.statusCode,
         );
       }
       final decoded = jsonDecode(response.body);
       if (decoded is! Map) {
-        throw const SidApiException('SID sent an unexpected answer');
+        throw const LaikaApiException('LAIka sent an unexpected answer');
       }
       return Map<String, dynamic>.from(decoded);
-    } on SidApiException {
+    } on LaikaApiException {
       rethrow;
     } on TimeoutException {
       throw _connectionException();
@@ -318,15 +318,15 @@ class SidApi {
     } on http.ClientException {
       throw _connectionException();
     } on FormatException {
-      throw const SidApiException('SID sent an unexpected answer');
+      throw const LaikaApiException('LAIka sent an unexpected answer');
     }
   }
 
-  SidApiException _responseException(http.Response response) {
+  LaikaApiException _responseException(http.Response response) {
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map && decoded['detail'] is String) {
-        return SidApiException(
+        return LaikaApiException(
           decoded['detail'] as String,
           response.statusCode,
         );
@@ -334,13 +334,13 @@ class SidApi {
     } on FormatException {
       // Fall through to the safe HTTP fallback.
     }
-    return SidApiException(
-      'SID answered with HTTP ${response.statusCode}',
+    return LaikaApiException(
+      'LAIka answered with HTTP ${response.statusCode}',
       response.statusCode,
     );
   }
 
-  SidApiException _connectionException() => SidApiException(
+  LaikaApiException _connectionException() => LaikaApiException(
     "Can't reach ${_server.name} at ${_server.url}. Is the VPN connected?",
   );
 

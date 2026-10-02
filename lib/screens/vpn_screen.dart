@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import '../api/sid_api.dart';
-import '../models/sid_server.dart';
+import '../api/laika_api.dart';
+import '../models/laika_server.dart';
 import '../vpn/vpn_controller.dart';
 import '../vpn/vpn_profile.dart';
 import '../vpn/vpn_store.dart';
@@ -13,7 +13,7 @@ import '../vpn/vpn_store.dart';
 class VpnScreen extends StatefulWidget {
   const VpnScreen({super.key, required this.server, required this.vpnStore, required this.vpn});
 
-  final SidServer server;
+  final LaikaServer server;
   final VpnStore vpnStore;
   final VpnController vpn;
 
@@ -93,7 +93,7 @@ class _VpnScreenState extends State<VpnScreen> {
     if (saved == null) { setState(() => _error = "This doesn't look like an OpenVPN client profile (.ovpn)"); return; }
     try {
       await ensureConnected(widget.vpn, saved, widget.server.name);
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     }
   }

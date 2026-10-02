@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api/models.dart';
-import '../api/sid_api.dart';
-import '../models/sid_server.dart';
+import '../api/laika_api.dart';
+import '../models/laika_server.dart';
 import '../services/server_store.dart';
 import 'project_screen.dart';
 import '../vpn/vpn_controller.dart';
@@ -22,7 +22,7 @@ class ProjectsScreen extends StatefulWidget {
   final ServerStore store;
   final VpnStore vpnStore;
   final VpnController vpn;
-  final SidApi Function(SidServer server)? apiFor;
+  final LaikaApi Function(LaikaServer server)? apiFor;
 
   @override
   State<ProjectsScreen> createState() => _ProjectsScreenState();
@@ -30,9 +30,9 @@ class ProjectsScreen extends StatefulWidget {
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
   StreamSubscription<void>? _storeSubscription;
-  SidApi? _api;
+  LaikaApi? _api;
   Summary? _summary;
-  SidApiException? _error;
+  LaikaApiException? _error;
   bool _loading = true;
   bool _connectingVpn = false;
 
@@ -72,7 +72,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       return;
     }
     final server = matches.first;
-    final api = widget.apiFor?.call(server) ?? SidApi(server);
+    final api = widget.apiFor?.call(server) ?? LaikaApi(server);
     _api = api;
     try {
       final profile = await widget.vpnStore.load(server.id);
@@ -88,7 +88,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           _loading = false;
         });
       }
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) {
         setState(() {
           _error = error;
@@ -99,7 +99,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = const SidApiException('Unable to load projects.');
+          _error = const LaikaApiException('Unable to load projects.');
           _connectingVpn = false;
           _loading = false;
         });
@@ -150,7 +150,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           : _summary == null
           ? const Center(
               child: Text(
-                'No server yet. Add one in Settings with the pairing code from SID.',
+                'No server yet. Add one in Settings with the pairing code from LAIka.',
               ),
             )
           : RefreshIndicator(

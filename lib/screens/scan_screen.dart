@@ -40,7 +40,7 @@ class _ScanScreenState extends State<ScanScreen> {
               padding: const EdgeInsets.all(12),
               color: Colors.black54,
               child: const Text(
-                'Point the camera at the QR code in SID → Settings → Phones & apps',
+                'Point the camera at the QR code in LAIka → Settings → Phones & apps',
                 style: TextStyle(color: Colors.white),
                 textAlign: TextAlign.center,
               ),

@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:openvpn_flutter/openvpn_flutter.dart';
 
-import '../api/sid_api.dart';
+import '../api/laika_api.dart';
 import 'vpn_profile.dart';
 
 enum VpnStatus { disconnected, connecting, connected, failed }
@@ -44,9 +44,9 @@ class OpenVpnController implements VpnController {
   String? get lastError => _lastError;
 
   Future<void> _initialize() => _initializing ??= _openvpn.initialize(
-    groupIdentifier: 'group.dev.sid.sidApp',
-    providerBundleIdentifier: 'dev.sid.sidApp.VPNExtension',
-    localizedDescription: 'SID VPN',
+    groupIdentifier: 'group.dev.laika.app',
+    providerBundleIdentifier: 'dev.laika.app.VPNExtension',
+    localizedDescription: 'LAIka VPN',
   );
 
   void _onStageChanged(VPNStage stage, String rawStage) {
@@ -66,7 +66,7 @@ class OpenVpnController implements VpnController {
       if (await _openvpn.requestPermissionAndroid()) {
         _permissionGranted = true;
       } else {
-        _lastError = 'VPN permission denied. Allow SID App to set up a VPN connection when Android asks.';
+        _lastError = 'VPN permission denied. Allow LAIka App to set up a VPN connection when Android asks.';
         _status = VpnStatus.failed;
         _changes.add(_status);
         return;
@@ -157,7 +157,7 @@ Future<void> ensureConnected(
       done.complete();
     } else if (status == VpnStatus.failed && !done.isCompleted) {
       done.completeError(
-        SidApiException(
+        LaikaApiException(
           "Couldn't connect the VPN for $name: ${vpn.lastError ?? 'timed out'}",
         ),
       );
@@ -168,7 +168,7 @@ Future<void> ensureConnected(
     if (vpn.status == VpnStatus.connected && !done.isCompleted) done.complete();
     await done.future.timeout(timeout);
   } on TimeoutException {
-    throw SidApiException(
+    throw LaikaApiException(
       "Couldn't connect the VPN for $name: ${vpn.lastError ?? 'timed out'}",
     );
   } finally {

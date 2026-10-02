@@ -2,34 +2,34 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:sid_app/api/models.dart';
-import 'package:sid_app/api/sid_api.dart';
-import 'package:sid_app/models/sid_server.dart';
+import 'package:laika_app/api/models.dart';
+import 'package:laika_app/api/laika_api.dart';
+import 'package:laika_app/models/laika_server.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const infoBody = '''
-{"server_name":"SID","api_version":1,"min_api_version":1,"sid_commit":"342fa8f","server_time":1790898447.05,"device":{"id":"a1b2c3d4e5f6","name":"Dylan's phone"},"token_required":true,"device_actions":["extend","network_always","network_deny","network_once","reject"]}
+{"server_name":"LAIka","api_version":1,"min_api_version":1,"laika_commit":"342fa8f","server_time":1790898447.05,"device":{"id":"a1b2c3d4e5f6","name":"Dylan's phone"},"token_required":true,"device_actions":["extend","network_always","network_deny","network_once","reject"]}
 ''';
 
 const summaryBody = '''
-{"server_name":"SID","health":{"status":"ok","age_seconds":6},"needs_you":{"ready":[{"id":"1d2ab755","title":"Add a pause menu","project_id":"sid-app","status":"awaiting_review","integrated_candidate_commit":"f28dfc86c6372b77936d87a6271164c6c428763f"}],"stuck":[{"id":"9f00aa11","title":"Stripe checkout","project_id":"shop","status":"needs_human","needs_human_kind":"network","network_request_step":"tests","network_request_reason":"getaddrinfo EAI_AGAIN registry.npmjs.org"}]},"in_progress":[{"id":"962cf32b","project_id":"sid-app","status":"running","summary":"SID App: servers","updated_at":"1790898447.05","progress":{"total":3,"completed":1}}],"recent":[{"id":"3f9df88c","project_id":"sid-app","status":"completed","summary":"Create the SID App skeleton","updated_at":"1790898440.90","progress":{"total":1,"completed":1}}],"projects":[{"id":"sid","name":"SID AI Command Center","importance":"high","status":"active","parent":"","counts":{"jobs_running":1,"jobs_queued":0,"jobs_awaiting_approval":0,"jobs_needs_human":0}},{"id":"sid-app","name":"SID App","importance":"high","status":"active","parent":"sid","counts":{"jobs_running":0,"jobs_queued":2,"jobs_awaiting_approval":1,"jobs_needs_human":0}}]}
+{"server_name":"LAIka","health":{"status":"ok","age_seconds":6},"needs_you":{"ready":[{"id":"1d2ab755","title":"Add a pause menu","project_id":"laika-app","status":"awaiting_review","integrated_candidate_commit":"f28dfc86c6372b77936d87a6271164c6c428763f"}],"stuck":[{"id":"9f00aa11","title":"Stripe checkout","project_id":"shop","status":"needs_human","needs_human_kind":"network","network_request_step":"tests","network_request_reason":"getaddrinfo EAI_AGAIN registry.npmjs.org"}]},"in_progress":[{"id":"962cf32b","project_id":"laika-app","status":"running","summary":"LAIka App: servers","updated_at":"1790898447.05","progress":{"total":3,"completed":1}}],"recent":[{"id":"3f9df88c","project_id":"laika-app","status":"completed","summary":"Create the LAIka App skeleton","updated_at":"1790898440.90","progress":{"total":1,"completed":1}}],"projects":[{"id":"sid","name":"LAIka AI Command Center","importance":"high","status":"active","parent":"","counts":{"jobs_running":1,"jobs_queued":0,"jobs_awaiting_approval":0,"jobs_needs_human":0}},{"id":"laika-app","name":"LAIka App","importance":"high","status":"active","parent":"sid","counts":{"jobs_running":0,"jobs_queued":2,"jobs_awaiting_approval":1,"jobs_needs_human":0}}]}
 ''';
 
 const projectBody = '''
-{"id":"sid-app","name":"SID App","status":"active","importance":"high","parent":"sid","parent_name":"SID AI Command Center","project_type":{"type":"mobile_cross"},"children":[{"id":"x","name":"X","status":"active"}],"goals":[{"id":"83aa0cee","status":"completed","summary":"SID App: servers","progress":{"total":1,"completed":1}}],"jobs":[{"id":"20792a55","title":"Servers: pairing, secure storage, settings UI, tests","status":"merged"}]}
+{"id":"laika-app","name":"LAIka App","status":"active","importance":"high","parent":"sid","parent_name":"LAIka AI Command Center","project_type":{"type":"mobile_cross"},"children":[{"id":"x","name":"X","status":"active"}],"goals":[{"id":"83aa0cee","status":"completed","summary":"LAIka App: servers","progress":{"total":1,"completed":1}}],"jobs":[{"id":"20792a55","title":"Servers: pairing, secure storage, settings UI, tests","status":"merged"}]}
 ''';
 
 const sessionBody = '''
-{"id":"0123456789abcdef","project_id":"sid-app","status":"questions","questions":[{"question":"Which key?","options":["Esc","P"]}],"brief":null,"error":"","goal_id":""}
+{"id":"0123456789abcdef","project_id":"laika-app","status":"questions","questions":[{"question":"Which key?","options":["Esc","P"]}],"brief":null,"error":"","goal_id":""}
 ''';
 
-SidServer server({String url = 'http://sid.test'}) =>
-    SidServer(id: 'sid', name: 'SID', url: url, key: 'secret-key');
+LaikaServer server({String url = 'http://laika.test'}) =>
+    LaikaServer(id: 'sid', name: 'LAIka', url: url, key: 'secret-key');
 
 void main() {
   test('info parses and sends authentication headers', () async {
     late http.Request request;
-    final api = SidApi(
+    final api = LaikaApi(
       server(),
       client: MockClient((received) async {
         request = received;
@@ -39,10 +39,10 @@ void main() {
 
     final result = await api.info();
 
-    expect(result.serverName, 'SID');
+    expect(result.serverName, 'LAIka');
     expect(result.apiVersion, 1);
     expect(result.minApiVersion, 1);
-    expect(result.sidCommit, '342fa8f');
+    expect(result.laikaCommit, '342fa8f');
     expect(result.deviceName, "Dylan's phone");
     expect(request.headers['authorization'], 'Bearer secret-key');
     expect(request.headers['accept'], 'application/json');
@@ -50,8 +50,8 @@ void main() {
 
   test('trailing slash is removed from info URL', () async {
     late Uri requested;
-    final api = SidApi(
-      server(url: 'http://sid.test/'),
+    final api = LaikaApi(
+      server(url: 'http://laika.test/'),
       client: MockClient((request) async {
         requested = request.url;
         return http.Response(infoBody, 200);
@@ -64,7 +64,7 @@ void main() {
   });
 
   test('summary parses jobs, goals, and projects', () async {
-    final api = SidApi(
+    final api = LaikaApi(
       server(),
       client: MockClient((_) async => http.Response(summaryBody, 200)),
     );
@@ -86,7 +86,7 @@ void main() {
     expect(result.inProgress.single.total, 3);
     expect(result.inProgress.single.completed, 1);
     expect(result.inProgress.single.updatedAt, 1790898447.05);
-    expect(result.recent.single.summary, 'Create the SID App skeleton');
+    expect(result.recent.single.summary, 'Create the LAIka App skeleton');
     expect(result.projects[1].parent, 'sid');
     expect(result.projects[1].queued, 2);
     expect(result.projects[1].awaitingApproval, 1);
@@ -94,7 +94,7 @@ void main() {
   });
 
   test('missing lists parse as empty', () async {
-    final api = SidApi(
+    final api = LaikaApi(
       server(),
       client: MockClient((_) async => http.Response('{}', 200)),
     );
@@ -109,14 +109,14 @@ void main() {
   });
 
   test('HTTP, JSON, and connection errors use exact messages', () async {
-    Future<SidApiException> errorFor(
+    Future<LaikaApiException> errorFor(
       Future<http.Response> Function(http.Request) handler,
     ) async {
-      final api = SidApi(server(), client: MockClient(handler));
+      final api = LaikaApi(server(), client: MockClient(handler));
       try {
         await api.info();
         throw StateError('expected an exception');
-      } on SidApiException catch (error) {
+      } on LaikaApiException catch (error) {
         return error;
       }
     }
@@ -124,54 +124,54 @@ void main() {
     final unauthorized = await errorFor((_) async => http.Response('', 401));
     expect(
       unauthorized.message,
-      "This phone's key was revoked or is not valid. Pair it again from SID → Settings → Phones & apps.",
+      "This phone's key was revoked or is not valid. Pair it again from LAIka → Settings → Phones & apps.",
     );
     expect(unauthorized.statusCode, 401);
     final serverError = await errorFor((_) async => http.Response('', 500));
-    expect(serverError.message, 'SID answered with HTTP 500');
+    expect(serverError.message, 'LAIka answered with HTTP 500');
     expect(serverError.statusCode, 500);
     final invalidJson = await errorFor((_) async => http.Response('nope', 200));
-    expect(invalidJson.message, 'SID sent an unexpected answer');
+    expect(invalidJson.message, 'LAIka sent an unexpected answer');
     final connection = await errorFor(
       (_) async => throw http.ClientException('offline'),
     );
     expect(
       connection.message,
-      "Can't reach SID at http://sid.test. Is the VPN connected?",
+      "Can't reach LAIka at http://laika.test. Is the VPN connected?",
     );
   });
 
   test('checkCompatible validates API version before pairing', () async {
     final newer = jsonDecode(infoBody) as Map<String, dynamic>;
     newer['min_api_version'] = 2;
-    final newerApi = SidApi(
+    final newerApi = LaikaApi(
       server(),
       client: MockClient((_) async => http.Response(jsonEncode(newer), 200)),
     );
     expect(
       newerApi.checkCompatible(),
       throwsA(
-        isA<SidApiException>().having(
+        isA<LaikaApiException>().having(
           (error) => error.message,
           'message',
-          'This SID server needs a newer app (API version 2)',
+          'This LAIka server needs a newer app (API version 2)',
         ),
       ),
     );
 
     final unpaired = jsonDecode(infoBody) as Map<String, dynamic>;
     unpaired['device'] = null;
-    final unpairedApi = SidApi(
+    final unpairedApi = LaikaApi(
       server(),
       client: MockClient((_) async => http.Response(jsonEncode(unpaired), 200)),
     );
     expect(
       unpairedApi.checkCompatible(),
       throwsA(
-        isA<SidApiException>().having(
+        isA<LaikaApiException>().having(
           (error) => error.message,
           'message',
-          'This phone is not paired with SID. Pair it again from SID → Settings → Phones & apps.',
+          'This phone is not paired with LAIka. Pair it again from LAIka → Settings → Phones & apps.',
         ),
       ),
     );
@@ -179,7 +179,7 @@ void main() {
 
   test('project parses detail and encodes id with limit', () async {
     late http.Request request;
-    final api = SidApi(
+    final api = LaikaApi(
       server(),
       client: MockClient((received) async {
         request = received;
@@ -192,7 +192,7 @@ void main() {
     expect(request.method, 'GET');
     expect(request.url.path, '/api/projects/sid%20app%2F1');
     expect(request.url.queryParameters['limit'], '25');
-    expect(result.parentName, 'SID AI Command Center');
+    expect(result.parentName, 'LAIka AI Command Center');
     expect(result.type, 'mobile_cross');
     expect(result.children.single.name, 'X');
     expect(result.goals.single.completed, 1);
@@ -200,11 +200,11 @@ void main() {
   });
 
   test('project and assistant models use empty defaults', () async {
-    final api = SidApi(
+    final api = LaikaApi(
       server(),
       client: MockClient((_) async => http.Response('{}', 200)),
     );
-    final project = await api.project('sid-app');
+    final project = await api.project('laika-app');
     expect(project.name, '');
     expect(project.children, isEmpty);
     expect(project.goals, isEmpty);
@@ -230,11 +230,11 @@ void main() {
 
   test('new API calls use JSON methods, paths, and bodies', () async {
     final requests = <http.Request>[];
-    final api = SidApi(
+    final api = LaikaApi(
       server(),
       client: MockClient((request) async {
         requests.add(request);
-        if (request.url.path == '/api/projects/sid-app') {
+        if (request.url.path == '/api/projects/laika-app') {
           return http.Response('{"id":"session"}', 202);
         }
         if (request.url.path.endsWith('/submit') ||
@@ -245,8 +245,8 @@ void main() {
       }),
     );
 
-    expect(await api.submitGoal('sid-app', 'Do it'), 'goal-id');
-    await api.startAssistant('sid-app', 'An idea');
+    expect(await api.submitGoal('laika-app', 'Do it'), 'goal-id');
+    await api.startAssistant('laika-app', 'An idea');
     await api.answerAssistant('session', <String>['Esc']);
     await api.reviseAssistant('session', 'Make it smaller');
     expect(
@@ -258,7 +258,7 @@ void main() {
 
     expect(requests, hasLength(7));
     expect(requests[0].method, 'POST');
-    expect(requests[0].url.path, '/api/projects/sid-app/goals');
+    expect(requests[0].url.path, '/api/projects/laika-app/goals');
     expect(requests[0].headers['content-type'], 'application/json');
     expect(jsonDecode(requests[0].body), containsPair('goal', 'Do it'));
     expect(jsonDecode(requests[0].body), containsPair('atomic', false));
@@ -278,18 +278,18 @@ void main() {
     expect(requests[6].url.path, '/api/assistant/session');
   });
 
-  test('detail responses become SidApiException messages', () async {
+  test('detail responses become LaikaApiException messages', () async {
     for (final status in <int>[409, 422]) {
-      final api = SidApi(
+      final api = LaikaApi(
         server(),
         client: MockClient(
           (_) async => http.Response('{"detail":"nope-$status"}', status),
         ),
       );
       await expectLater(
-        api.submitGoal('sid-app', 'goal'),
+        api.submitGoal('laika-app', 'goal'),
         throwsA(
-          isA<SidApiException>().having(
+          isA<LaikaApiException>().having(
             (error) => error.message,
             'message',
             'nope-$status',

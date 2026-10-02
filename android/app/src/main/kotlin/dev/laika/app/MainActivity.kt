@@ -1,4 +1,4 @@
-package dev.sid.sid_app
+package dev.laika.app
 
 import io.flutter.embedding.android.FlutterActivity
 import android.content.Intent

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api/models.dart';
-import '../api/sid_api.dart';
-import '../models/sid_server.dart';
+import '../api/laika_api.dart';
+import '../models/laika_server.dart';
 import '../services/server_store.dart';
 import '../vpn/vpn_controller.dart';
 import '../vpn/vpn_store.dart';
@@ -21,17 +21,17 @@ class HomeScreen extends StatefulWidget {
   final ServerStore store;
   final VpnStore vpnStore;
   final VpnController vpn;
-  final SidApi Function(SidServer server)? apiFor;
+  final LaikaApi Function(LaikaServer server)? apiFor;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SidServer? _server;
-  SidApi? _api;
+  LaikaServer? _server;
+  LaikaApi? _api;
   Summary? _summary;
-  SidApiException? _error;
+  LaikaApiException? _error;
   bool _loading = true;
   bool _connectingVpn = false;
   String? _actionJobId;
@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    final api = widget.apiFor?.call(server) ?? SidApi(server);
+    final api = widget.apiFor?.call(server) ?? LaikaApi(server);
     setState(() {
       _server = server;
       _api = api;
@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _summary = summary;
         _loading = false;
       });
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (!mounted) return;
       setState(() {
         _error = error;
@@ -109,9 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
       await _api!.jobAction(job.id, action);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Sent. SID is on it.')));
+          .showSnackBar(const SnackBar(content: Text('Sent. LAIka is on it.')));
       await _load();
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.message)));
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(job.title, style: Theme.of(context).textTheme.titleMedium),
-            const Text('Stuck: SID gave up after several tries'),
+            const Text('Stuck: LAIka gave up after several tries'),
             Row(
               children: [
                 FilledButton(
@@ -238,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(job.projectId),
-                const Text('Ready to approve on the SID dashboard'),
+                const Text('Ready to approve on the LAIka dashboard'),
               ],
             ),
           ),
@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _section(
           'In progress',
           summary.inProgress.isEmpty
-              ? const Text('SID is idle.')
+              ? const Text('LAIka is idle.')
               : Column(
                   children: summary.inProgress
                       .map(
@@ -308,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(title: const Text('Home')),
         body: const Center(
           child: Text(
-            'No server yet. Add one in Settings with the pairing code from SID.',
+            'No server yet. Add one in Settings with the pairing code from LAIka.',
           ),
         ),
       );

@@ -1,17 +1,17 @@
 import 'dart:convert';
 
-import '../models/sid_server.dart';
+import '../models/laika_server.dart';
 
-SidServer parsePairingCode(String text, {required String id}) {
+LaikaServer parsePairingCode(String text, {required String id}) {
   dynamic decoded;
   try {
     decoded = jsonDecode(text.trim());
   } on FormatException {
-    throw FormatException('Not a SID pairing code');
+    throw FormatException('Not a LAIka pairing code');
   }
 
   if (decoded is! Map) {
-    throw FormatException('Not a SID pairing code');
+    throw FormatException('Not a LAIka pairing code');
   }
   final json = decoded.cast<String, dynamic>();
   if (json['v'] != 1) {
@@ -27,13 +27,13 @@ SidServer parsePairingCode(String text, {required String id}) {
       ? rawUrl.substring(0, rawUrl.length - 1)
       : rawUrl;
   final rawKey = json['key'];
-  if (rawKey is! String || !rawKey.startsWith('sidk_')) {
+  if (rawKey is! String || !rawKey.startsWith('laika_')) {
     throw FormatException('Invalid device key');
   }
   final rawName = json['name'];
   final name = rawName is String && rawName.trim().isNotEmpty
       ? rawName.trim()
-      : 'SID';
+      : 'LAIka';
 
-  return SidServer(id: id, name: name, url: url, key: rawKey);
+  return LaikaServer(id: id, name: name, url: url, key: rawKey);
 }

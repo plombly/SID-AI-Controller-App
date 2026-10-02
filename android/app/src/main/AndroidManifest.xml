@@ -2,7 +2,7 @@
     <application
         android:extractNativeLibs="true"
         android:usesCleartextTraffic="true"
-        android:label="sid_app"
+        android:label="LAIka"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

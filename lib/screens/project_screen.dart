@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../api/models.dart';
-import '../api/sid_api.dart';
+import '../api/laika_api.dart';
 import 'goal_composer_screen.dart';
 
 class ProjectScreen extends StatefulWidget {
   const ProjectScreen({super.key, required this.projectId, required this.api});
 
   final String projectId;
-  final SidApi api;
+  final LaikaApi api;
 
   @override
   State<ProjectScreen> createState() => _ProjectScreenState();
@@ -16,7 +16,7 @@ class ProjectScreen extends StatefulWidget {
 
 class _ProjectScreenState extends State<ProjectScreen> {
   ProjectDetail? _project;
-  SidApiException? _error;
+  LaikaApiException? _error;
   bool _loading = true;
 
   @override
@@ -40,7 +40,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           _loading = false;
         });
       }
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) {
         setState(() {
           _error = error;
@@ -50,7 +50,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = const SidApiException('Unable to load project.');
+          _error = const LaikaApiException('Unable to load project.');
           _loading = false;
         });
       }
@@ -137,7 +137,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 );
                 if (mounted) _load();
               },
-              label: const Text('Give SID work'),
+              label: const Text('Give LAIka work'),
               icon: const Icon(Icons.add),
             ),
     );

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api/models.dart';
-import '../api/sid_api.dart';
+import '../api/laika_api.dart';
 
 class GoalComposerScreen extends StatefulWidget {
   const GoalComposerScreen({
@@ -15,7 +15,7 @@ class GoalComposerScreen extends StatefulWidget {
 
   final String projectId;
   final String projectName;
-  final SidApi api;
+  final LaikaApi api;
 
   @override
   State<GoalComposerScreen> createState() => _GoalComposerScreenState();
@@ -111,7 +111,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
         final session = await widget.api.assistant(sessionId);
         if (!mounted) return;
         _setSession(session);
-      } on SidApiException catch (error) {
+      } on LaikaApiException catch (error) {
         if (mounted) {
           setState(() {
             _error = error.message;
@@ -130,8 +130,8 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      messenger.showSnackBar(const SnackBar(content: Text('Started. SID is on it.')));
-    } on SidApiException catch (error) {
+      messenger.showSnackBar(const SnackBar(content: Text('Started. LAIka is on it.')));
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
   }
@@ -141,7 +141,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
     setState(() { _requestInFlight = true; _error = null; });
     try {
       _setSession(await widget.api.startAssistant(widget.projectId, _ideaController.text));
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
   }
@@ -158,7 +158,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
               (index) => _answerControllers[index].text,
             );
       _setSession(await widget.api.answerAssistant(session.id, answers));
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
   }
@@ -174,7 +174,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
       _showFeedback = false;
       _feedbackController.clear();
       _setSession(revised);
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
   }
@@ -188,8 +188,8 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      messenger.showSnackBar(const SnackBar(content: Text('Started. SID is on it.')));
-    } on SidApiException catch (error) {
+      messenger.showSnackBar(const SnackBar(content: Text('Started. LAIka is on it.')));
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
   }
@@ -201,7 +201,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
     if (session != null) {
       try {
         await widget.api.cancelAssistant(session.id);
-      } on SidApiException {
+      } on LaikaApiException {
         // Starting over returns to the editor even if cancellation fails.
       }
     }
@@ -212,7 +212,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
     setState(() { _session = null; _requestInFlight = true; _error = null; });
     try {
       _setSession(await widget.api.startAssistant(widget.projectId, _ideaController.text));
-    } on SidApiException catch (error) {
+    } on LaikaApiException catch (error) {
       if (mounted) setState(() { _requestInFlight = false; _error = error.message; });
     }
   }
@@ -243,7 +243,7 @@ class _GoalComposerScreenState extends State<GoalComposerScreen> {
         minLines: 4,
         maxLines: 8,
         onChanged: (_) => setState(() {}),
-        decoration: InputDecoration(labelText: 'What should SID do in ${widget.projectName}?'),
+        decoration: InputDecoration(labelText: 'What should LAIka do in ${widget.projectName}?'),
       ),
       CheckboxListTile(
         contentPadding: EdgeInsets.zero,

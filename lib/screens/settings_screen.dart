@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/sid_server.dart';
+import '../models/laika_server.dart';
 import '../services/pairing.dart';
 import '../services/server_store.dart';
 import 'scan_screen.dart';
@@ -25,7 +25,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  List<SidServer> _servers = <SidServer>[];
+  List<LaikaServer> _servers = <LaikaServer>[];
   final Map<String, bool> _hasVpn = <String, bool>{};
   String? _activeId;
 
@@ -57,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _removeServer(SidServer server) async {
+  Future<void> _removeServer(LaikaServer server) async {
     final remove = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -96,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ? const Center(
                     child: Text(
                       'No servers yet. Add one with the pairing code from '
-                      'SID → Settings → Phones & apps.',
+                      'LAIka → Settings → Phones & apps.',
                       textAlign: TextAlign.center,
                     ),
                   )

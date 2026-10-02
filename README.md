@@ -1,6 +1,6 @@
-# SID App
+# LAIka App
 
-SID App is a phone app for SID, the self-hosted AI software-engineering control plane.
+LAIka App is a phone app for LAIka, the self-hosted AI software-engineering control plane.
 
 License: GPL-3.0
 
@@ -12,7 +12,7 @@ Build iOS with `flutter build ios` (needs a Mac with Xcode).
 
 In Xcode, add the App Groups and Network Extensions capabilities to the Runner's target. Click the `+` button on the bottom left, choose **NETWORK EXTENSION**, and create a Network Extension target named `VPNExtension`.
 
-Add the same App Groups and Network Extensions capabilities to `VPNExtension`. Configure the app bundle identifier as `dev.sid.sidApp`, the extension bundle identifier as `dev.sid.sidApp.VPNExtension`, and the App Group as `group.dev.sid.sidApp` for both targets.
+Add the same App Groups and Network Extensions capabilities to `VPNExtension`. Configure the app bundle identifier as `dev.laika.app`, the extension bundle identifier as `dev.laika.app.VPNExtension`, and the App Group as `group.dev.laika.app` for both targets.
 
 Add this target to `ios/Podfile`:
 

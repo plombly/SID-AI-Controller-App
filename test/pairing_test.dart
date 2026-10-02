@@ -1,25 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sid_app/services/pairing.dart';
+import 'package:laika_app/services/pairing.dart';
 
 void main() {
   const sample =
-      '{"v":1,"name":"Home SID","url":"http://10.0.0.59:8000",'
-      '"key":"sidk_AbC123-_xyz"}';
+      '{"v":1,"name":"Home LAIka","url":"http://10.0.0.59:8000",'
+      '"key":"laika_AbC123-_xyz"}';
 
   test('parses a pairing code', () {
     final server = parsePairingCode(sample, id: 'one');
-    expect(server.name, 'Home SID');
+    expect(server.name, 'Home LAIka');
     expect(server.url, 'http://10.0.0.59:8000');
   });
 
   test('removes one trailing slash and defaults the name', () {
     final server = parsePairingCode(
-      '{"v":1,"url":"https://sid.example///",'
-      '"key":"sidk_key"}',
+      '{"v":1,"url":"https://laika.example///",'
+      '"key":"laika_key"}',
       id: 'one',
     );
-    expect(server.url, 'https://sid.example//');
-    expect(server.name, 'SID');
+    expect(server.url, 'https://laika.example//');
+    expect(server.name, 'LAIka');
   });
 
   test('rejects invalid pairing codes', () {
@@ -33,7 +33,7 @@ void main() {
     );
     expect(
       () => parsePairingCode('{"v":1,"url":"ftp://x",'
-          '"key":"sidk_key"}', id: 'one'),
+          '"key":"laika_key"}', id: 'one'),
       throwsA(isA<FormatException>().having(
         (error) => error.message,
         'message',
@@ -54,7 +54,7 @@ void main() {
       throwsA(isA<FormatException>().having(
         (error) => error.message,
         'message',
-        'Not a SID pairing code',
+        'Not a LAIka pairing code',
       )),
     );
   });

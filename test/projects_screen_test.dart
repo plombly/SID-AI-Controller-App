@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:sid_app/api/sid_api.dart';
-import 'package:sid_app/models/sid_server.dart';
-import 'package:sid_app/screens/projects_screen.dart';
-import 'package:sid_app/services/server_store.dart';
-import 'package:sid_app/vpn/vpn_controller.dart';
-import 'package:sid_app/vpn/vpn_store.dart';
+import 'package:laika_app/api/laika_api.dart';
+import 'package:laika_app/models/laika_server.dart';
+import 'package:laika_app/screens/projects_screen.dart';
+import 'package:laika_app/services/server_store.dart';
+import 'package:laika_app/vpn/vpn_controller.dart';
+import 'package:laika_app/vpn/vpn_store.dart';
 
-const _server = SidServer(
+const _server = LaikaServer(
   id: 'sid',
-  name: 'SID',
-  url: 'http://sid.test',
+  name: 'LAIka',
+  url: 'http://laika.test',
   key: 'key',
 );
 
@@ -25,8 +25,8 @@ Future<ServerStore> _store() async {
 }
 
 const _summary = '''{"projects":[
-  {"id":"sid","name":"SID AI Command Center","parent":"","counts":{"jobs_running":1,"jobs_queued":2}},
-  {"id":"sid-app","name":"SID App","parent":"sid","counts":{"jobs_running":0,"jobs_queued":0,"jobs_awaiting_approval":1}}
+  {"id":"sid","name":"LAIka AI Command Center","parent":"","counts":{"jobs_running":1,"jobs_queued":2}},
+  {"id":"laika-app","name":"LAIka App","parent":"sid","counts":{"jobs_running":0,"jobs_queued":0,"jobs_awaiting_approval":1}}
 ]}''';
 
 void main() {
@@ -34,20 +34,20 @@ void main() {
     tester,
   ) async {
     final store = await _store();
-    final api = SidApi(
+    final api = LaikaApi(
       _server,
       client: MockClient((request) async {
-        if (request.url.path.endsWith('/api/projects/sid-app')) {
+        if (request.url.path.endsWith('/api/projects/laika-app')) {
           return http.Response(
             jsonEncode({
-              'id': 'sid-app',
-              'name': 'SID App',
+              'id': 'laika-app',
+              'name': 'LAIka App',
               'parent': 'sid',
-              'parent_name': 'SID AI Command Center',
+              'parent_name': 'LAIka AI Command Center',
               'goals': [
                 {
                   'id': 'g',
-                  'summary': 'SID App: servers\nMore',
+                  'summary': 'LAIka App: servers\nMore',
                   'status': 'completed',
                   'progress': {'total': 1, 'completed': 1},
                 },
@@ -72,20 +72,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('SID AI Command Center'), findsOneWidget);
-    expect(find.text('SID App'), findsOneWidget);
+    expect(find.text('LAIka AI Command Center'), findsOneWidget);
+    expect(find.text('LAIka App'), findsOneWidget);
     expect(find.textContaining('1 to approve'), findsOneWidget);
     final tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
     expect(
       (tiles[1].contentPadding! as EdgeInsets).left,
       greaterThan((tiles[0].contentPadding! as EdgeInsets).left),
     );
-    await tester.tap(find.text('SID App'));
+    await tester.tap(find.text('LAIka App'));
     await tester.pumpAndSettle();
-    expect(find.text('Part of SID AI Command Center'), findsOneWidget);
-    expect(find.text('SID App: servers'), findsOneWidget);
+    expect(find.text('Part of LAIka AI Command Center'), findsOneWidget);
+    expect(find.text('LAIka App: servers'), findsOneWidget);
     expect(find.text('1 of 1 steps'), findsOneWidget);
-    expect(find.text('Give SID work'), findsOneWidget);
+    expect(find.text('Give LAIka work'), findsOneWidget);
   });
 
   testWidgets('shows no-server and server errors', (tester) async {
@@ -101,13 +101,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text(
-        'No server yet. Add one in Settings with the pairing code from SID.',
+        'No server yet. Add one in Settings with the pairing code from LAIka.',
       ),
       findsOneWidget,
     );
 
     final store = await _store();
-    final api = SidApi(
+    final api = LaikaApi(
       _server,
       client: MockClient(
         (_) async => http.Response('{"detail":"Access denied"}', 403),

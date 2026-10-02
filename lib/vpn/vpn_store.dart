@@ -8,7 +8,7 @@ class VpnStore {
 
   final KeyValueStore store;
 
-  static String key(String serverId) => 'sid.vpn.$serverId';
+  static String key(String serverId) => 'laika.vpn.$serverId';
 
   Future<VpnProfile?> load(String serverId) async {
     final value = await store.read(key(serverId));

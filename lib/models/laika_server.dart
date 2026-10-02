@@ -1,5 +1,5 @@
-class SidServer {
-  const SidServer({
+class LaikaServer {
+  const LaikaServer({
     required this.id,
     required this.name,
     required this.url,
@@ -18,8 +18,8 @@ class SidServer {
         'key': key,
       };
 
-  factory SidServer.fromJson(Map<String, dynamic> json) {
-    return SidServer(
+  factory LaikaServer.fromJson(Map<String, dynamic> json) {
+    return LaikaServer(
       id: json['id'] as String,
       name: json['name'] as String,
       url: json['url'] as String,

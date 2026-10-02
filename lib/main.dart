@@ -1,3 +1,3 @@
 import 'app.dart';
 
-void main() => runApp(SidApp());
+void main() => runApp(LaikaApp());
