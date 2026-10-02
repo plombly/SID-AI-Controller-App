@@ -4,11 +4,18 @@ import '../models/sid_server.dart';
 import '../services/pairing.dart';
 import '../services/server_store.dart';
 import 'scan_screen.dart';
+import '../vpn/vpn_controller.dart';
+import '../vpn/vpn_store.dart';
+import 'vpn_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.store});
+  SettingsScreen({super.key, required this.store, VpnStore? vpnStore, VpnController? vpn})
+      : vpnStore = vpnStore ?? VpnStore(MemoryKeyValueStore()),
+        vpn = vpn ?? FakeVpnController();
 
   final ServerStore store;
+  final VpnStore vpnStore;
+  final VpnController vpn;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -16,6 +23,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   List<SidServer> _servers = <SidServer>[];
+  final Map<String, bool> _hasVpn = <String, bool>{};
   String? _activeId;
 
   @override
@@ -27,6 +35,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _refresh() async {
     final servers = await widget.store.servers();
     final activeId = await widget.store.activeId();
+    for (final server in servers) {
+      _hasVpn[server.id] = await widget.vpnStore.load(server.id) != null;
+    }
     if (!mounted) {
       return;
     }
@@ -91,20 +102,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         .map(
                           (server) => ListTile(
                             title: Text(server.name),
-                            subtitle: Text(server.url),
+                            subtitle: Text('${server.url}${_hasVpn[server.id] == true ? ' · VPN' : ''}'),
                             leading: Icon(
                               server.id == _activeId
                                   ? Icons.check_circle
                                   : Icons.circle_outlined,
                             ),
                             onTap: () async {
+                              await widget.vpn.disconnect();
                               await widget.store.setActive(server.id);
                               await _refresh();
                             },
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Remove',
-                              onPressed: () => _removeServer(server),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.vpn_key_outlined),
+                                  tooltip: 'VPN',
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => VpnScreen(server: server, vpnStore: widget.vpnStore, vpn: widget.vpn)));
+                                    await _refresh();
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  tooltip: 'Remove',
+                                  onPressed: () => _removeServer(server),
+                                ),
+                              ],
                             ),
                           ),
                         )

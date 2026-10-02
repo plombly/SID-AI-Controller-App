@@ -6,11 +6,17 @@ import '../api/models.dart';
 import '../api/sid_api.dart';
 import '../models/sid_server.dart';
 import '../services/server_store.dart';
+import '../vpn/vpn_controller.dart';
+import '../vpn/vpn_store.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.store, this.apiFor});
+  HomeScreen({super.key, required this.store, VpnStore? vpnStore, VpnController? vpn, this.apiFor})
+      : vpnStore = vpnStore ?? VpnStore(MemoryKeyValueStore()),
+        vpn = vpn ?? FakeVpnController();
 
   final ServerStore store;
+  final VpnStore vpnStore;
+  final VpnController vpn;
   final SidApi Function(SidServer server)? apiFor;
 
   @override
@@ -23,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Summary? _summary;
   SidApiException? _error;
   bool _loading = true;
+  bool _connectingVpn = false;
   String? _actionJobId;
   Timer? _timer;
 
@@ -46,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _loading = true;
         _error = null;
+        _connectingVpn = false;
       });
     }
     final activeId = await widget.store.activeId();
@@ -68,6 +76,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _api = api;
     });
     try {
+      final profile = await widget.vpnStore.load(server.id);
+      if (profile != null) {
+        if (mounted) setState(() => _connectingVpn = true);
+        await ensureConnected(widget.vpn, profile, server.name);
+        if (mounted) setState(() => _connectingVpn = false);
+      }
       final summary = await api.summary();
       if (!mounted) return;
       setState(() {
@@ -78,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _error = error;
+        _connectingVpn = false;
         _loading = false;
       });
     }
@@ -299,7 +314,9 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text(_summary?.serverName ?? _server?.name ?? 'Home'),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: _connectingVpn
+              ? const Column(mainAxisSize: MainAxisSize.min, children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Connecting VPN…')])
+              : const CircularProgressIndicator())
           : _error != null
           ? Center(
               child: Column(

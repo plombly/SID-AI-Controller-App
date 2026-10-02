@@ -167,6 +167,6 @@ Future<void> ensureConnected(
       "Couldn't connect the VPN for $name: ${vpn.lastError ?? 'timed out'}",
     );
   } finally {
-    await subscription.cancel();
+    unawaited(subscription.cancel());
   }
 }

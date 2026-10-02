@@ -7,11 +7,17 @@ import '../api/sid_api.dart';
 import '../models/sid_server.dart';
 import '../services/server_store.dart';
 import 'project_screen.dart';
+import '../vpn/vpn_controller.dart';
+import '../vpn/vpn_store.dart';
 
 class ProjectsScreen extends StatefulWidget {
-  const ProjectsScreen({super.key, required this.store, this.apiFor});
+  ProjectsScreen({super.key, required this.store, VpnStore? vpnStore, VpnController? vpn, this.apiFor})
+      : vpnStore = vpnStore ?? VpnStore(MemoryKeyValueStore()),
+        vpn = vpn ?? FakeVpnController();
 
   final ServerStore store;
+  final VpnStore vpnStore;
+  final VpnController vpn;
   final SidApi Function(SidServer server)? apiFor;
 
   @override
@@ -24,6 +30,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Summary? _summary;
   SidApiException? _error;
   bool _loading = true;
+  bool _connectingVpn = false;
 
   @override
   void initState() {
@@ -43,6 +50,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       setState(() {
         _loading = true;
         _error = null;
+        _connectingVpn = false;
       });
     }
     final activeId = await widget.store.activeId();
@@ -63,6 +71,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     final api = widget.apiFor?.call(server) ?? SidApi(server);
     _api = api;
     try {
+      final profile = await widget.vpnStore.load(server.id);
+      if (profile != null) {
+        if (mounted) setState(() => _connectingVpn = true);
+        await ensureConnected(widget.vpn, profile, server.name);
+        if (mounted) setState(() => _connectingVpn = false);
+      }
       final summary = await api.summary();
       if (mounted) {
         setState(() {
@@ -74,6 +88,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       if (mounted) {
         setState(() {
           _error = error;
+          _connectingVpn = false;
           _loading = false;
         });
       }
@@ -81,6 +96,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       if (mounted) {
         setState(() {
           _error = const SidApiException('Unable to load projects.');
+          _connectingVpn = false;
           _loading = false;
         });
       }
@@ -113,7 +129,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Projects')),
       body: _loading && _summary == null
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: _connectingVpn
+              ? const Column(mainAxisSize: MainAxisSize.min, children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Connecting VPN…')])
+              : const CircularProgressIndicator())
           : _error != null
           ? _failure()
           : _summary == null
