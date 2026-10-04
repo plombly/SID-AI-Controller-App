@@ -30,6 +30,31 @@ void main() {
     },
   );
 
+  test('server json without alt_urls loads with empty altUrls', () {
+    final loaded = LaikaServer.fromJson({
+      'id': 'one',
+      'name': 'One',
+      'url': 'http://one',
+      'key': 'laika_one',
+    });
+    expect(loaded.altUrls, isEmpty);
+  });
+
+  test('altUrls survive a store round trip', () async {
+    final store = ServerStore(MemoryKeyValueStore());
+    await store.save(const LaikaServer(
+      id: 'one',
+      name: 'One',
+      url: 'http://one',
+      key: 'laika_one',
+      altUrls: ['http://two', 'http://three'],
+    ));
+    expect((await store.servers()).single.altUrls, [
+      'http://two',
+      'http://three',
+    ]);
+  });
+
   test('round-trips server data through laika.servers', () async {
     final memory = MemoryKeyValueStore();
     final store = ServerStore(memory);

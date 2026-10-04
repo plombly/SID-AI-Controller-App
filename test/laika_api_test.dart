@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -27,6 +28,86 @@ LaikaServer server({String url = 'http://laika.test'}) =>
     LaikaServer(id: 'sid', name: 'LAIka', url: url, key: 'secret-key');
 
 void main() {
+  group('alternative addresses', () {
+    LaikaServer multi() => const LaikaServer(
+      id: 'sid',
+      name: 'LAIka',
+      url: 'http://one.test',
+      key: 'secret-key',
+      altUrls: ['http://two.test'],
+    );
+
+    test('GET falls through to the next host', () async {
+      final hosts = <String>[];
+      final api = LaikaApi(
+        multi(),
+        client: MockClient((request) async {
+          hosts.add(request.url.host);
+          if (request.url.host == 'one.test') {
+            throw http.ClientException('offline');
+          }
+          return http.Response(infoBody, 200);
+        }),
+      );
+      await api.info();
+      expect(hosts, ['one.test', 'two.test']);
+      expect(api.currentUrl, 'http://two.test');
+      await api.info();
+      expect(hosts.length, 3);
+      expect(hosts.last, 'two.test');
+    });
+
+    test('POST timeout is not retried', () async {
+      final hosts = <String>[];
+      final api = LaikaApi(
+        multi(),
+        client: MockClient((request) async {
+          hosts.add(request.url.host);
+          throw TimeoutException('slow');
+        }),
+      );
+      await expectLater(
+        api.submitGoal('p', 'goal'),
+        throwsA(isA<LaikaApiException>()),
+      );
+      expect(hosts, ['one.test']);
+    });
+
+    test('409 is not retried', () async {
+      final hosts = <String>[];
+      final api = LaikaApi(
+        multi(),
+        client: MockClient((request) async {
+          hosts.add(request.url.host);
+          return http.Response('{}', 409);
+        }),
+      );
+      await expectLater(
+        api.submitGoal('p', 'goal'),
+        throwsA(isA<LaikaApiException>()),
+      );
+      expect(hosts, ['one.test']);
+    });
+
+    test('all failed message names every address', () async {
+      final api = LaikaApi(
+        multi(),
+        client: MockClient((_) async => throw http.ClientException('x')),
+      );
+      await expectLater(
+        api.info(),
+        throwsA(
+          isA<LaikaApiException>().having(
+            (e) => e.message,
+            'message',
+            "Can't reach LAIka at http://one.test (also tried http://two.test). "
+                'Is the VPN or Tailscale connected?',
+          ),
+        ),
+      );
+    });
+  });
+
   test('info parses and sends authentication headers', () async {
     late http.Request request;
     final api = LaikaApi(
