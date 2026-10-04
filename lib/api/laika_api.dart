@@ -39,6 +39,9 @@ class LaikaApi {
   final LaikaServer _server;
   final http.Client _client;
   final bool _ownsClient;
+  late String _currentUrl = _server.url.replaceFirst(RegExp(r'/+$'), '');
+
+  String get currentUrl => _currentUrl;
 
   Future<AppInfo> info() async {
     final json = await _getJson('/api/app/info');
@@ -124,22 +127,20 @@ class LaikaApi {
     String expectedStatus = 'needs_human',
   }) async {
     try {
-      final baseUrl = _server.url.replaceFirst(RegExp(r'/+$'), '');
-      final response = await _client
-          .post(
-            Uri.parse('$baseUrl/api/jobs/$jobId/actions'),
-            headers: {
-              'Authorization': 'Bearer ${_server.key}',
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'action': action,
-              'request_id': newRequestId(),
-              'expected_status': expectedStatus,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await _send(
+        'POST',
+        path: '/api/jobs/$jobId/actions',
+        headers: {
+          'Authorization': 'Bearer ${_server.key}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'action': action,
+          'request_id': newRequestId(),
+          'expected_status': expectedStatus,
+        }),
+      );
 
       if (response.statusCode == 401) {
         throw LaikaApiException(
@@ -170,12 +171,6 @@ class LaikaApi {
       }
     } on LaikaApiException {
       rethrow;
-    } on TimeoutException {
-      throw _connectionException();
-    } on SocketException {
-      throw _connectionException();
-    } on http.ClientException {
-      throw _connectionException();
     }
   }
 
@@ -196,16 +191,14 @@ class LaikaApi {
 
   Future<Map<String, dynamic>> _getJson(String path) async {
     try {
-      final baseUrl = _server.url.replaceFirst(RegExp(r'/+$'), '');
-      final response = await _client
-          .get(
-            Uri.parse('$baseUrl$path'),
-            headers: {
-              'Authorization': 'Bearer ${_server.key}',
-              'Accept': 'application/json',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await _send(
+        'GET',
+        path: path,
+        headers: {
+          'Authorization': 'Bearer ${_server.key}',
+          'Accept': 'application/json',
+        },
+      );
 
       if (response.statusCode == 401 || response.statusCode == 403) {
         if (response.statusCode == 403) {
@@ -230,12 +223,6 @@ class LaikaApi {
       return Map<String, dynamic>.from(decoded);
     } on LaikaApiException {
       rethrow;
-    } on TimeoutException {
-      throw _connectionException();
-    } on SocketException {
-      throw _connectionException();
-    } on http.ClientException {
-      throw _connectionException();
     } on FormatException {
       throw const LaikaApiException('LAIka sent an unexpected answer');
     }
@@ -245,47 +232,37 @@ class LaikaApi {
     List<String> segments, [
     Map<String, String>? queryParameters,
   ]) async {
-    return _requestJson(_uri(segments, queryParameters), method: 'GET');
+    return _requestJson(segments, method: 'GET', query: queryParameters);
   }
 
   Future<Map<String, dynamic>> _postJson(
     List<String> segments,
     Map<String, dynamic> body,
-  ) async => _requestJson(_uri(segments), method: 'POST', body: body);
-
-  Uri _uri(List<String> segments, [Map<String, String>? queryParameters]) {
-    final base = Uri.parse(_server.url.replaceFirst(RegExp(r'/+$'), ''));
-    return base.replace(
-      pathSegments: <String>[...base.pathSegments, ...segments],
-      queryParameters: queryParameters,
-    );
-  }
+  ) async => _requestJson(segments, method: 'POST', body: body);
 
   Future<Map<String, dynamic>> _requestJson(
-    Uri uri, {
+    List<String> segments, {
     required String method,
     Map<String, dynamic>? body,
+    Map<String, String>? query,
   }) async {
     try {
-      final response =
-          await (method == 'GET'
-                  ? _client.get(
-                      uri,
-                      headers: {
-                        'Authorization': 'Bearer ${_server.key}',
-                        'Accept': 'application/json',
-                      },
-                    )
-                  : _client.post(
-                      uri,
-                      headers: {
-                        'Authorization': 'Bearer ${_server.key}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                      },
-                      body: jsonEncode(body ?? <String, dynamic>{}),
-                    ))
-              .timeout(const Duration(seconds: 15));
+      final response = await _send(
+        method,
+        pathSegments: segments,
+        query: query,
+        headers: method == 'GET'
+            ? {
+                'Authorization': 'Bearer ${_server.key}',
+                'Accept': 'application/json',
+              }
+            : {
+                'Authorization': 'Bearer ${_server.key}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+        body: method == 'GET' ? null : jsonEncode(body ?? <String, dynamic>{}),
+      );
       if (response.statusCode == 401) {
         throw LaikaApiException(
           "This phone's key was revoked or is not valid. Pair it again from LAIka → Settings → Phones & apps.",
@@ -311,15 +288,58 @@ class LaikaApi {
       return Map<String, dynamic>.from(decoded);
     } on LaikaApiException {
       rethrow;
-    } on TimeoutException {
-      throw _connectionException();
-    } on SocketException {
-      throw _connectionException();
-    } on http.ClientException {
-      throw _connectionException();
     } on FormatException {
       throw const LaikaApiException('LAIka sent an unexpected answer');
     }
+  }
+
+  Future<http.Response> _send(
+    String method, {
+    String? path,
+    List<String>? pathSegments,
+    Map<String, String>? query,
+    String? body,
+    Map<String, String>? headers,
+  }) async {
+    final bases = <String>[];
+    for (final base in <String>[_currentUrl, _server.url, ..._server.altUrls]) {
+      final normalized = base.replaceFirst(RegExp(r'/+$'), '');
+      if (!bases.contains(normalized)) {
+        bases.add(normalized);
+      }
+    }
+    for (final base in bases) {
+      try {
+        Uri uri;
+        if (pathSegments != null) {
+          final parsed = Uri.parse(base);
+          uri = parsed.replace(
+            pathSegments: <String>[...parsed.pathSegments, ...pathSegments],
+            queryParameters: query,
+          );
+        } else {
+          uri = Uri.parse('$base$path');
+          if (query != null) {
+            uri = uri.replace(queryParameters: query);
+          }
+        }
+        final request = method == 'GET'
+            ? _client.get(uri, headers: headers)
+            : _client.post(uri, headers: headers, body: body);
+        final response = await request.timeout(const Duration(seconds: 15));
+        _currentUrl = base;
+        return response;
+      } on TimeoutException {
+        if (method != 'GET') {
+          throw _connectionException();
+        }
+      } on SocketException {
+        // Try the next address.
+      } on http.ClientException {
+        // Try the next address.
+      }
+    }
+    throw _connectionException();
   }
 
   LaikaApiException _responseException(http.Response response) {
@@ -341,7 +361,9 @@ class LaikaApi {
   }
 
   LaikaApiException _connectionException() => LaikaApiException(
-    "Can't reach ${_server.name} at ${_server.url}. Is the VPN connected?",
+    "Can't reach ${_server.name} at ${_server.url}"
+    "${_server.altUrls.isEmpty ? '' : ' (also tried ${_server.altUrls.join(', ')})'}"
+    '. Is the VPN or Tailscale connected?',
   );
 
   void close() {

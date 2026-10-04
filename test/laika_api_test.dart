@@ -137,7 +137,7 @@ void main() {
     );
     expect(
       connection.message,
-      "Can't reach LAIka at http://laika.test. Is the VPN connected?",
+      "Can't reach LAIka at http://laika.test. Is the VPN or Tailscale connected?",
     );
   });
 

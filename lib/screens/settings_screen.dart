@@ -106,7 +106,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           (server) => ListTile(
                             title: Text(server.name),
                             subtitle: Text(
-                              '${server.url}${_hasVpn[server.id] == true ? ' · VPN' : ''}',
+                              '${server.url}${_hasVpn[server.id] == true ? ' · VPN' : ''}'
+                              '${server.altUrls.isNotEmpty ? '\nAlso: ${server.altUrls.join(', ')}' : ''}',
                             ),
                             leading: Icon(
                               server.id == _activeId

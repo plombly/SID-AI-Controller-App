@@ -26,6 +26,20 @@ LaikaServer parsePairingCode(String text, {required String id}) {
   final url = rawUrl.endsWith('/')
       ? rawUrl.substring(0, rawUrl.length - 1)
       : rawUrl;
+  final rawAltUrls = json['alt_urls'];
+  final altUrls = <String>[];
+  if (rawAltUrls is List) {
+    for (final entry in rawAltUrls) {
+      if (entry is! String ||
+          (!entry.startsWith('http://') && !entry.startsWith('https://'))) {
+        continue;
+      }
+      final altUrl = entry.replaceFirst(RegExp(r'/+$'), '');
+      if (altUrl != url && !altUrls.contains(altUrl)) {
+        altUrls.add(altUrl);
+      }
+    }
+  }
   final rawKey = json['key'];
   if (rawKey is! String || !rawKey.startsWith('laika_')) {
     throw FormatException('Invalid device key');
@@ -35,5 +49,11 @@ LaikaServer parsePairingCode(String text, {required String id}) {
       ? rawName.trim()
       : 'LAIka';
 
-  return LaikaServer(id: id, name: name, url: url, key: rawKey);
+  return LaikaServer(
+    id: id,
+    name: name,
+    url: url,
+    key: rawKey,
+    altUrls: altUrls,
+  );
 }
